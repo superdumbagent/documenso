@@ -658,4 +658,170 @@ test.describe('Template Field Prefill API v2', () => {
     const errorData = await response.json();
     expect(errorData.message).toContain('not found in options for RADIO field');
   });
+
+  test('should keep template labels and placeholders when prefill omits them', async ({ request }) => {
+    const { user, team } = await seedUser();
+
+    const { token } = await createApiToken({
+      userId: user.id,
+      teamId: team.id,
+      tokenName: 'test-token',
+      expiresIn: null,
+    });
+
+    const template = await seedBlankTemplate(user, team.id, {
+      createTemplateOptions: {
+        title: 'Template Prefill Keeps Labels V2',
+      },
+    });
+
+    const firstEnvelopeItem = template.envelopeItems[0];
+
+    const recipient = await prisma.recipient.create({
+      data: {
+        envelopeId: template.id,
+        email: 'recipient@example.com',
+        name: 'Test Recipient',
+        role: RecipientRole.SIGNER,
+        token: 'test-token',
+        readStatus: 'NOT_OPENED',
+        sendStatus: 'NOT_SENT',
+        signingStatus: 'NOT_SIGNED',
+      },
+    });
+
+    const baseField = {
+      envelopeId: template.id,
+      envelopeItemId: firstEnvelopeItem.id,
+      recipientId: recipient.id,
+      page: 1,
+      positionX: 5,
+      width: 20,
+      height: 5,
+      customText: '',
+      inserted: false,
+    };
+
+    const textField = await prisma.field.create({
+      data: {
+        ...baseField,
+        type: FieldType.TEXT,
+        positionY: 5,
+        fieldMeta: { type: 'text', label: 'Company name', placeholder: 'e.g. Acme Inc.' },
+      },
+    });
+
+    const numberField = await prisma.field.create({
+      data: {
+        ...baseField,
+        type: FieldType.NUMBER,
+        positionY: 15,
+        fieldMeta: { type: 'number', label: 'Employees', placeholder: 'e.g. 10' },
+      },
+    });
+
+    const radioField = await prisma.field.create({
+      data: {
+        ...baseField,
+        type: FieldType.RADIO,
+        positionY: 25,
+        fieldMeta: {
+          type: 'radio',
+          label: 'Plan',
+          values: [
+            { id: 1, value: 'Option A', checked: false },
+            { id: 2, value: 'Option B', checked: false },
+          ],
+        },
+      },
+    });
+
+    const checkboxField = await prisma.field.create({
+      data: {
+        ...baseField,
+        type: FieldType.CHECKBOX,
+        positionY: 35,
+        fieldMeta: {
+          type: 'checkbox',
+          label: 'Add-ons',
+          values: [
+            { id: 1, value: 'Check A', checked: false },
+            { id: 2, value: 'Check B', checked: false },
+          ],
+        },
+      },
+    });
+
+    const dropdownField = await prisma.field.create({
+      data: {
+        ...baseField,
+        type: FieldType.DROPDOWN,
+        positionY: 45,
+        fieldMeta: {
+          type: 'dropdown',
+          label: 'Region',
+          values: [{ value: 'Select A' }, { value: 'Select B' }],
+        },
+      },
+    });
+
+    const response = await request.post(`${WEBAPP_BASE_URL}/api/v2-beta/template/use`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        templateId: mapSecondaryIdToTemplateId(template.secondaryId),
+        recipients: [
+          {
+            id: recipient.id,
+            email: 'recipient@example.com',
+            name: 'Test Recipient',
+          },
+        ],
+        prefillFields: [
+          { id: textField.id, type: 'text', value: 'Acme' },
+          { id: numberField.id, type: 'number', value: '42' },
+          { id: radioField.id, type: 'radio', value: 'Option B' },
+          { id: checkboxField.id, type: 'checkbox', value: ['Check A'] },
+          { id: dropdownField.id, type: 'dropdown', value: 'Select B' },
+        ],
+      },
+    });
+
+    expect(response.status()).toBe(200);
+
+    const responseData = await response.json();
+
+    const document = await prisma.envelope.findUniqueOrThrow({
+      where: {
+        secondaryId: mapDocumentIdToSecondaryId(responseData.id),
+      },
+      include: {
+        fields: true,
+      },
+    });
+
+    const getFieldMeta = (type: FieldType) => document.fields.find((field) => field.type === type)?.fieldMeta;
+
+    expect(getFieldMeta(FieldType.TEXT)).toMatchObject({
+      label: 'Company name',
+      placeholder: 'e.g. Acme Inc.',
+      text: 'Acme',
+    });
+
+    expect(getFieldMeta(FieldType.NUMBER)).toMatchObject({
+      label: 'Employees',
+      placeholder: 'e.g. 10',
+      value: '42',
+    });
+
+    expect(getFieldMeta(FieldType.RADIO)).toMatchObject({ label: 'Plan' });
+    expect(getFieldMeta(FieldType.CHECKBOX)).toMatchObject({ label: 'Add-ons' });
+
+    expect(getFieldMeta(FieldType.DROPDOWN)).toMatchObject({
+      label: 'Region',
+      defaultValue: 'Select B',
+    });
+  });
 });
