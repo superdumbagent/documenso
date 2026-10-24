@@ -1225,45 +1225,49 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
       };
     }
 
-    const updatedRecipient = await updateEnvelopeRecipients({
-      userId: user.id,
-      teamId: team.id,
-      id: {
-        type: 'envelopeId',
-        id: envelope.id,
-      },
-      recipients: [
-        {
-          id: Number(recipientId),
-          email,
-          name,
-          role,
-          signingOrder,
-          actionAuth: authOptions?.actionAuth ?? [],
+    try {
+      const { recipients } = await updateEnvelopeRecipients({
+        userId: user.id,
+        teamId: team.id,
+        id: {
+          type: 'envelopeId',
+          id: envelope.id,
         },
-      ],
-      requestMetadata: metadata,
-    })
-      .then(({ recipients }) => recipients[0])
-      .catch(null);
+        recipients: [
+          {
+            id: Number(recipientId),
+            email,
+            name,
+            role,
+            signingOrder,
+            actionAuth: authOptions?.actionAuth ?? [],
+          },
+        ],
+        requestMetadata: metadata,
+      });
 
-    if (!updatedRecipient) {
+      const updatedRecipient = recipients[0];
+
+      if (!updatedRecipient) {
+        return {
+          status: 404,
+          body: {
+            message: 'Recipient not found',
+          },
+        };
+      }
+
       return {
-        status: 404,
+        status: 200,
         body: {
-          message: 'Recipient not found',
+          ...updatedRecipient,
+          documentId: Number(documentId),
+          signingUrl: `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${updatedRecipient.token}`,
         },
       };
+    } catch (err) {
+      return AppError.toRestAPIError(err);
     }
-
-    return {
-      status: 200,
-      body: {
-        ...updatedRecipient,
-        documentId: Number(documentId),
-        signingUrl: `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${updatedRecipient.token}`,
-      },
-    };
   }),
 
   deleteRecipient: authenticatedMiddleware(async (args, user, team, { logger, metadata }) => {
