@@ -151,8 +151,8 @@ const getUpdatedFieldMeta = (field: Field, prefillField?: TFieldMetaPrefillField
       const meta: TTextFieldMeta = {
         ...existingMeta,
         type: 'text',
-        label: field.label,
-        placeholder: field.placeholder,
+        ...(field.label !== undefined ? { label: field.label } : {}),
+        ...(field.placeholder !== undefined ? { placeholder: field.placeholder } : {}),
         text: field.value,
       };
 
@@ -168,8 +168,8 @@ const getUpdatedFieldMeta = (field: Field, prefillField?: TFieldMetaPrefillField
       const meta: TNumberFieldMeta = {
         ...existingMeta,
         type: 'number',
-        label: field.label,
-        placeholder: field.placeholder,
+        ...(field.label !== undefined ? { label: field.label } : {}),
+        ...(field.placeholder !== undefined ? { placeholder: field.placeholder } : {}),
         value: field.value,
       };
 
@@ -209,7 +209,7 @@ const getUpdatedFieldMeta = (field: Field, prefillField?: TFieldMetaPrefillField
       const meta: TRadioFieldMeta = {
         ...existingMeta,
         type: 'radio',
-        label: field.label,
+        ...(field.label !== undefined ? { label: field.label } : {}),
         values: newValues,
         direction: radioMeta.direction ?? 'vertical',
       };
@@ -254,7 +254,7 @@ const getUpdatedFieldMeta = (field: Field, prefillField?: TFieldMetaPrefillField
       const meta: TCheckboxFieldMeta = {
         ...existingMeta,
         type: 'checkbox',
-        label: field.label,
+        ...(field.label !== undefined ? { label: field.label } : {}),
         values: newValues,
         direction: checkboxMeta.direction ?? 'vertical',
       };
@@ -284,7 +284,7 @@ const getUpdatedFieldMeta = (field: Field, prefillField?: TFieldMetaPrefillField
       const meta: TDropdownFieldMeta = {
         ...existingMeta,
         type: 'dropdown',
-        label: field.label,
+        ...(field.label !== undefined ? { label: field.label } : {}),
         defaultValue: field.value,
       };
 
