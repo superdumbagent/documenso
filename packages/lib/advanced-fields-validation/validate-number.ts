@@ -23,7 +23,7 @@ export const validateNumberField = (
     }
   }
 
-  const numberValue = parseFloat(value);
+  const numberValue = parseFloat(normalizeNumberValue(value, numberFormat));
 
   if (isSigningPage && required && !value) {
     errors.push('Value is required');
@@ -62,4 +62,16 @@ export const validateNumberField = (
   }
 
   return errors;
+};
+
+const normalizeNumberValue = (value: string, numberFormat?: string | null) => {
+  if (numberFormat === '123.456.789,00') {
+    return value.replace(/\./g, '').replace(',', '.');
+  }
+
+  if (numberFormat === '123,456,789.00' || numberFormat === '123456,789.00') {
+    return value.replace(/,/g, '');
+  }
+
+  return value;
 };
