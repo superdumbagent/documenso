@@ -61,6 +61,11 @@ export const SignFieldTextDialog = createCallable<SignFieldTextDialogProps, stri
                       <Textarea
                         id="custom-text"
                         placeholder={fieldMeta?.placeholder ?? t`Enter your text here`}
+                        maxLength={
+                          fieldMeta?.characterLimit && fieldMeta.characterLimit > 0
+                            ? fieldMeta.characterLimit
+                            : undefined
+                        }
                         className={cn('w-full rounded-md', {
                           'border-2 border-red-300 text-left ring-2 ring-red-200 ring-offset-2 ring-offset-red-200 focus-visible:border-red-400 focus-visible:ring-4 focus-visible:ring-red-200 focus-visible:ring-offset-2 focus-visible:ring-offset-red-200':
                             fieldState.error,
