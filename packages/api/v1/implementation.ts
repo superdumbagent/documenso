@@ -826,7 +826,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
 
       await prisma.envelopeItem.update({
         where: {
-          id: firstEnvelopeItemData.id,
+          id: envelopeItems[0].id,
         },
         data: {
           title: body.title || fileName,
