@@ -11,7 +11,7 @@ import { Trans } from '@lingui/react/macro';
 import type { Role, Subscription } from '@prisma/client';
 import { Edit, Loader } from 'lucide-react';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 type UserData = {
   id: number;
@@ -35,8 +35,9 @@ export const AdminDashboardUsersTable = ({ users, totalPages, perPage, page }: A
   const { _ } = useLingui();
 
   const [isPending, startTransition] = useTransition();
+  const [searchParams] = useSearchParams();
   const updateSearchParams = useUpdateSearchParams();
-  const [searchString, setSearchString] = useState('');
+  const [searchString, setSearchString] = useState(() => searchParams.get('search') ?? '');
   const debouncedSearchString = useDebouncedValue(searchString, 1000);
 
   const columns = useMemo(() => {
@@ -83,6 +84,10 @@ export const AdminDashboardUsersTable = ({ users, totalPages, perPage, page }: A
   }, []);
 
   useEffect(() => {
+    if (debouncedSearchString === (searchParams.get('search') ?? '')) {
+      return;
+    }
+
     startTransition(() => {
       updateSearchParams({
         search: debouncedSearchString,

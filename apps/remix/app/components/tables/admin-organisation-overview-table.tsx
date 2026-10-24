@@ -10,7 +10,7 @@ import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
 import { ChevronDownIcon, ChevronsUpDown, ChevronUpIcon, Loader } from 'lucide-react';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 export type OrganisationOverview = {
   id: string;
@@ -46,8 +46,9 @@ export const AdminOrganisationOverviewTable = ({
   const { _, i18n } = useLingui();
 
   const [isPending, startTransition] = useTransition();
+  const [searchParams] = useSearchParams();
   const updateSearchParams = useUpdateSearchParams();
-  const [searchString, setSearchString] = useState('');
+  const [searchString, setSearchString] = useState(() => searchParams.get('search') ?? '');
   const debouncedSearchString = useDebouncedValue(searchString, 1000);
 
   const columns = useMemo(() => {
@@ -143,9 +144,13 @@ export const AdminOrganisationOverviewTable = ({
         size: 120,
       },
     ] satisfies DataTableColumnDef<OrganisationOverview>[];
-  }, [sortOrder, sortBy, dateRange]);
+  }, [sortOrder, sortBy, dateRange, page, perPage, debouncedSearchString]);
 
   useEffect(() => {
+    if (debouncedSearchString === (searchParams.get('search') ?? '')) {
+      return;
+    }
+
     startTransition(() => {
       updateSearchParams({
         search: debouncedSearchString,
