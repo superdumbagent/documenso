@@ -182,9 +182,21 @@ export const convertToLocalSystemFormat = (
     return 'Invalid date';
   }
 
+  // A date-only value parses to midnight, so shifting it to a zone west of the
+  // document timezone would display the previous day.
+  if (!hasTimeComponent(coalescedDateFormat)) {
+    return parsedDate.toFormat(coalescedDateFormat);
+  }
+
   const formattedDate = parsedDate.toLocal().toFormat(coalescedDateFormat);
 
   return formattedDate;
+};
+
+const hasTimeComponent = (dateFormat: string) => {
+  const formatWithoutLiterals = dateFormat.replace(/'[^']*'/g, '');
+
+  return /[HhkKmsSatTfFxX]/.test(formatWithoutLiterals);
 };
 
 export const isValidDateFormat = (dateFormat: unknown): dateFormat is ValidDateFormat => {
