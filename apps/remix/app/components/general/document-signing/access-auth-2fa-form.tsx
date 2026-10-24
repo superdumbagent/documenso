@@ -11,7 +11,7 @@ import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
 import { ArrowLeftIcon, KeyIcon, MailIcon } from 'lucide-react';
-import { DateTime } from 'luxon';
+import { Duration } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -258,7 +258,7 @@ export const AccessAuth2FAForm = ({ onSubmit, token, error }: AccessAuth2FAFormP
                           })}
                         >
                           <Trans>
-                            Expires in {DateTime.fromMillis(Math.max(millisecondsRemaining, 0)).toFormat('mm:ss')}
+                            Expires in {Duration.fromMillis(Math.max(millisecondsRemaining, 0)).toFormat('mm:ss')}
                           </Trans>
                         </div>
                       )}
